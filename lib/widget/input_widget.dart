@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:like_wechat_input/const/resource.dart';
 import 'package:like_wechat_input/widget/image_button.dart';
 import 'dart:ui' as ui;
@@ -10,12 +9,16 @@ double _softKeyHeight = 200;
 
 class InputWidget extends StatefulWidget {
   final TextEditingController controller;
-  final List<Widget> otherItems;
+  final Widget otherItemWidget;
+  final Widget emojiWidget;
+  final Widget voiceWidget;
 
   const InputWidget({
     Key key,
     this.controller,
-    this.otherItems = const <Widget>[],
+    this.otherItemWidget,
+    this.emojiWidget,
+    this.voiceWidget,
   }) : super(key: key);
 
   @override
@@ -130,9 +133,10 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
   }
 
   Widget buildInputButton() {
-    final voiceButton = buildVoiceButton(context);
+    final voiceButton = widget.voiceWidget ?? buildVoiceButton(context);
     final inputButton = TextField(
       focusNode: focusNode,
+      controller: widget.controller,
       decoration: InputDecoration(
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.all(10),
@@ -194,13 +198,9 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
 
   Widget _buildBottomItems() {
     if (this.currentType == ChatType.other) {
-      return GridView(
-        shrinkWrap: true,
-        children: widget.otherItems,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-        ),
-      );
+      return widget.otherItemWidget ?? Center(child: Text("其他item"));
+    } else if (this.currentType == ChatType.emoji) {
+      return widget.emojiWidget ?? Center(child: Text("表情item"));
     } else {
       return Container();
     }
