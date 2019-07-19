@@ -132,7 +132,17 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     return StreamBuilder<String>(
       stream: inputContentStream,
       builder: (context, snapshot) {
-        if (snapshot.hasData && snapshot.data.trim().isNotEmpty) {
+        bool showSend() {
+          if (currentType == ChatType.voice) {
+            return false;
+          }
+          if (snapshot.hasData && snapshot.data.trim().isNotEmpty) {
+            return true;
+          }
+          return false;
+        }
+
+        if (showSend()) {
           return RaisedButton(
             child: Text("发送"),
             onPressed: () => widget.onSend?.call(snapshot.data.trim()),
