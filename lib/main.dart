@@ -29,6 +29,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   ChatType currentType;
 
+  TextEditingController ctl = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return NotificationListener<ChangeChatTypeNotification>(
@@ -44,11 +46,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Text(this.currentType.toString()),
               ),
             ),
-            InputWidget(),
+            InputWidget(
+              controller: ctl,
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void dispose() {
+    ctl.dispose();
+    super.dispose();
   }
 
   bool _onChange(ChangeChatTypeNotification notification) {

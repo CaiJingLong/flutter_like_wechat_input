@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:like_wechat_input/const/resource.dart';
 import 'package:like_wechat_input/widget/image_button.dart';
 import 'dart:ui' as ui;
+
+typedef void OnSend(String text);
 
 ChatType _initType = ChatType.text;
 
@@ -12,13 +16,15 @@ class InputWidget extends StatefulWidget {
   final Widget otherItemWidget;
   final Widget emojiWidget;
   final Widget voiceWidget;
+  final OnSend onSend;
 
   const InputWidget({
     Key key,
-    this.controller,
+    @required this.controller,
     this.otherItemWidget,
     this.emojiWidget,
     this.voiceWidget,
+    this.onSend,
   }) : super(key: key);
 
   @override
@@ -34,11 +40,16 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
 
   bool needAnim = true;
 
+  StreamController<String> inputContentStreamController = StreamController();
+
+  Stream<String> get inputContentStream => inputContentStreamController.stream;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     focusNode.addListener(onFocus);
+    widget.controller.addListener(_onInputChange);
   }
 
   @override
@@ -50,11 +61,12 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
       print("current type = $currentType");
       // updateState(ChatType.text);
     } else {
-      setState(() {});
+      // setState(() {});
     }
   }
 
   void onFocus() {
+    print("onFocuse");
     if (focusNode.hasFocus) {
       needAnim = false;
       updateState(ChatType.text);
@@ -64,8 +76,14 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     }
   }
 
+  void _onInputChange() {
+    inputContentStreamController.add(widget.controller.text);
+  }
+
   @override
   void dispose() {
+    inputContentStreamController.close();
+    widget.controller.removeListener(_onInputChange);
     focusNode.removeListener(onFocus);
     focusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
@@ -84,7 +102,7 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
               buildLeftButton(),
               Expanded(child: buildInputButton()),
               buildEmojiButton(),
-              buildOtherButton(),
+              buildRightButton(),
             ],
           ),
           _buildBottomContainer(child: _buildBottomItems()),
@@ -110,10 +128,21 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     );
   }
 
-  Widget buildOtherButton() {
-    return ImageButton(
-      image: AssetImage(R.ASSET_ADD_PNG),
-      onPressed: () => updateState(ChatType.other),
+  Widget buildRightButton() {
+    return StreamBuilder<String>(
+      stream: inputContentStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data.trim().isNotEmpty) {
+          return RaisedButton(
+            child: Text("发送"),
+            onPressed: () => widget.onSend?.call(snapshot.data.trim()),
+          );
+        }
+        return ImageButton(
+          image: AssetImage(R.ASSET_ADD_PNG),
+          onPressed: () => updateState(ChatType.other),
+        );
+      },
     );
   }
 
@@ -159,6 +188,9 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
   }
 
   Future<void> updateState(ChatType type) async {
+    if (type == ChatType.text || type == ChatType.voice) {
+      _initType = type;
+    }
     if (type == currentType) {
       return;
     }
