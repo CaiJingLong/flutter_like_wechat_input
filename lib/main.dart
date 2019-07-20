@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'widget/default_extra_item.dart';
 import 'widget/input_widget.dart';
 
 void main() => runApp(MyApp());
@@ -48,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             InputWidget(
               controller: ctl,
+              extraWidget: DefaultExtraWidget(),
             ),
           ],
         ),

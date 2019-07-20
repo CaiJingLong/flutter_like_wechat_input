@@ -13,7 +13,7 @@ double _softKeyHeight = 200;
 
 class InputWidget extends StatefulWidget {
   final TextEditingController controller;
-  final Widget otherItemWidget;
+  final Widget extraWidget;
   final Widget emojiWidget;
   final Widget voiceWidget;
   final OnSend onSend;
@@ -21,7 +21,7 @@ class InputWidget extends StatefulWidget {
   const InputWidget({
     Key key,
     @required this.controller,
-    this.otherItemWidget,
+    this.extraWidget,
     this.emojiWidget,
     this.voiceWidget,
     this.onSend,
@@ -150,7 +150,7 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
         }
         return ImageButton(
           image: AssetImage(R.ASSET_ADD_PNG),
-          onPressed: () => updateState(ChatType.other),
+          onPressed: () => updateState(ChatType.extra),
         );
       },
     );
@@ -213,7 +213,7 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
       showSoftKey();
     }
 
-    if (type == ChatType.emoji || type == ChatType.other) {
+    if (type == ChatType.emoji || type == ChatType.extra) {
       _currentOtherHeight = _softKeyHeight;
     } else {
       _currentOtherHeight = 0;
@@ -239,8 +239,8 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
   }
 
   Widget _buildBottomItems() {
-    if (this.currentType == ChatType.other) {
-      return widget.otherItemWidget ?? Center(child: Text("其他item"));
+    if (this.currentType == ChatType.extra) {
+      return widget.extraWidget ?? Center(child: Text("其他item"));
     } else if (this.currentType == ChatType.emoji) {
       return widget.emojiWidget ?? Center(child: Text("表情item"));
     } else {
@@ -265,7 +265,7 @@ enum ChatType {
   text,
   voice,
   emoji,
-  other,
+  extra,
 }
 
 class ChangeChatTypeNotification extends Notification {
