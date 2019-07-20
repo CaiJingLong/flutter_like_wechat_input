@@ -33,6 +33,18 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController ctl = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    ctl.addListener(onValueChange);
+  }
+
+  void dispose() {
+    ctl.removeListener(onValueChange);
+    ctl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return NotificationListener<ChangeChatTypeNotification>(
       onNotification: _onChange,
@@ -50,6 +62,9 @@ class _MyHomePageState extends State<MyHomePage> {
             InputWidget(
               controller: ctl,
               extraWidget: DefaultExtraWidget(),
+              onSend: (value){
+                print("send text $value");
+              },
             ),
           ],
         ),
@@ -57,9 +72,8 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void dispose() {
-    ctl.dispose();
-    super.dispose();
+  void onValueChange() {
+    print(ctl.text);
   }
 
   bool _onChange(ChangeChatTypeNotification notification) {

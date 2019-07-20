@@ -31,18 +31,17 @@ class InputWidget extends StatefulWidget {
   InputWidgetState createState() => InputWidgetState();
 }
 
-class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
+class InputWidgetState extends State<InputWidget>
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   ChatType currentType = _initType;
 
-  double _currentOtherHeight = 0;
-
   FocusNode focusNode = FocusNode();
-
-  bool needAnim = true;
 
   StreamController<String> inputContentStreamController = StreamController();
 
   Stream<String> get inputContentStream => inputContentStreamController.stream;
+
+  AnimationController _bottomHeightController;
 
   @override
   void initState() {
@@ -50,6 +49,12 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     focusNode.addListener(onFocus);
     widget.controller.addListener(_onInputChange);
+    _bottomHeightController = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 250,
+      ),
+    );
   }
 
   @override
@@ -68,11 +73,7 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
   void onFocus() {
     print("onFocuse");
     if (focusNode.hasFocus) {
-      needAnim = false;
       updateState(ChatType.text);
-      Future.delayed(const Duration(milliseconds: 100), () {
-        needAnim = true;
-      });
     }
   }
 
@@ -82,6 +83,7 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _bottomHeightController.dispose();
     inputContentStreamController.close();
     widget.controller.removeListener(_onInputChange);
     focusNode.removeListener(onFocus);
@@ -197,6 +199,14 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     );
   }
 
+  void changeBottomHeight(final double height) {
+    if (height > 0) {
+      _bottomHeightController.animateTo(1);
+    } else {
+      _bottomHeightController.animateBack(0);
+    }
+  }
+
   Future<void> updateState(ChatType type) async {
     if (type == ChatType.text || type == ChatType.voice) {
       _initType = type;
@@ -214,9 +224,11 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
     }
 
     if (type == ChatType.emoji || type == ChatType.extra) {
-      _currentOtherHeight = _softKeyHeight;
+      // _currentOtherHeight = _softKeyHeight;
+      changeBottomHeight(1);
     } else {
-      _currentOtherHeight = 0;
+      changeBottomHeight(0);
+      // _currentOtherHeight = 0;
     }
 
     setState(() {});
@@ -231,10 +243,17 @@ class InputWidgetState extends State<InputWidget> with WidgetsBindingObserver {
   }
 
   Widget _buildBottomContainer({Widget child}) {
-    return AnimatedContainer(
-      height: _currentOtherHeight,
-      duration: Duration(milliseconds: needAnim ? 150 : 0),
-      child: child,
+    return SizeTransition(
+      sizeFactor: _bottomHeightController,
+      child: Container(
+        child: child,
+        height: _softKeyHeight,
+      ),
+      // animation: _bottomHeightController,
+      // builder: (ctx,),
+      // height: _currentOtherHeight,
+      // duration: Duration(milliseconds: needAnim ? 150 : 0),
+      // child: child,
     );
   }
 
