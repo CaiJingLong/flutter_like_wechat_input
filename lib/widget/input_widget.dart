@@ -32,12 +32,13 @@ class InputWidget extends StatefulWidget {
 }
 
 class InputWidgetState extends State<InputWidget>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   ChatType currentType = _initType;
 
   FocusNode focusNode = FocusNode();
 
-  StreamController<String> inputContentStreamController = StreamController();
+  StreamController<String> inputContentStreamController =
+      StreamController.broadcast();
 
   Stream<String> get inputContentStream => inputContentStreamController.stream;
 
@@ -55,6 +56,16 @@ class InputWidgetState extends State<InputWidget>
         milliseconds: 250,
       ),
     );
+  }
+
+  bool checkShowSendButton(String text) {
+    if (currentType == ChatType.voice) {
+      return false;
+    }
+    if (text.trim().isNotEmpty) {
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -132,29 +143,42 @@ class InputWidgetState extends State<InputWidget>
 
   Widget buildRightButton() {
     return StreamBuilder<String>(
-      stream: inputContentStream,
+      stream: this.inputContentStream,
       builder: (context, snapshot) {
-        bool showSend() {
-          if (currentType == ChatType.voice) {
-            return false;
-          }
-          if (snapshot.hasData && snapshot.data.trim().isNotEmpty) {
-            return true;
-          }
-          return false;
-        }
-
-        if (showSend()) {
-          return RaisedButton(
-            child: Text("发送"),
-            onPressed: () => widget.onSend?.call(snapshot.data.trim()),
-          );
-        }
-        return ImageButton(
+        final sendButton = buildSend();
+        final extraButton = ImageButton(
           image: AssetImage(R.ASSET_ADD_PNG),
           onPressed: () => updateState(ChatType.extra),
         );
+
+        CrossFadeState crossFadeState =
+            checkShowSendButton(widget.controller.text)
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond;
+
+        return AnimatedCrossFade(
+          duration: const Duration(milliseconds: 250),
+          crossFadeState: crossFadeState,
+          firstChild: sendButton,
+          secondChild: extraButton,
+        );
       },
+    );
+  }
+
+  Widget buildSend() {
+    return RaisedButton(
+      color: Theme.of(context).primaryColor,
+      textColor: Colors.white,
+      child: Text("发送"),
+      onPressed: () => widget.onSend?.call(widget.controller.text.trim()),
+    );
+  }
+
+  Widget buildExtra() {
+    return ImageButton(
+      image: AssetImage(R.ASSET_ADD_PNG),
+      onPressed: () => updateState(ChatType.extra),
     );
   }
 
